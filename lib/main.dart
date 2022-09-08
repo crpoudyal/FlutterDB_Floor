@@ -10,10 +10,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ToDo App',
+    return const MaterialApp(
+      title: 'Floor DB',
       debugShowCheckedModeBanner: false,
-
       home: SplashScreen(),
     );
   }
