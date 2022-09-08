@@ -48,13 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
               TextField(
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText:'Enter First Name',
+                  hintText: 'Enter First Name',
                 ),
               ),
               TextField(
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: 'Enter Last Name'
+                  hintText: 'Enter Last Name',
                 ),
               ),
             ],
