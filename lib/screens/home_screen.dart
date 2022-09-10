@@ -1,6 +1,6 @@
-import 'package:floor/floor.dart';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
-import 'package:flutterdb/DAO/user_dao.dart';
 import 'package:flutterdb/db/database.dart';
 import 'package:flutterdb/entity/user.dart';
 
@@ -14,7 +14,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
-  late FlutterDatabase database;
+  FlutterDatabase? database;
 
   @override
   void initState() {
@@ -22,9 +22,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
   }
 
-  Future<void> initDatabase() async {
-    database = await $FloorFlutterDatabase.databaseBuilder('user.db').build();
-  }
+  // Future<void> initDatabase() async {
+  //   database = await $FloorFlutterDatabase.databaseBuilder('user.db').build();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -33,27 +33,38 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text("Floor DB"),
         actions: [
           IconButton(
-              onPressed: () {
-                openDialog();
-              },
-              icon: const Icon(Icons.add)),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.refresh)),
+            onPressed: () {
+              openDialog();
+            },
+            icon: const Icon(Icons.add),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
       body: FutureBuilder<FlutterDatabase>(
         future: $FloorFlutterDatabase.databaseBuilder('user.db').build(),
         builder: (context, data) {
-          if (data.hasData && data.data != null) {
+          if (data.hasData) {
             final FlutterDatabase database = data.data!;
             final userDao = database.userDao;
             return StreamBuilder<List<User>>(
               stream: userDao.findAllUser(),
               builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data != null) {
+                log("Snapshot data" + snapshot.toString());
+                if (snapshot.hasData) {
                   final List<User> userList = snapshot.data!;
                   return buildUserList(userList);
+                } else if (snapshot.hasError) {
+                  return const Center(
+                    child: Text("Error encountered"),
+                  );
                 } else {
-                  return const Text("No data");
+                  return const Center(
+                    child: Text("No Data Found"),
+                  );
                 }
               },
             );
@@ -68,29 +79,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget buildUserList(List<User> userList) {
-    return ListView(
-      children: userList
-          .map((item) => ListTile(
-                title: Text(item.firstName),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () {},
-                ),
-              ))
-          .toList(),
-    );
-    /*return ListView.builder(
+    return ListView.builder(
       itemCount: userList.length,
       itemBuilder: (BuildContext context, int index) {
+        log("context----->" + context.toString());
         return ListTile(
-          title: const Text("Example"),
+          title: Text(userList[index].firstName),
+          subtitle: Text(userList[index].lastName),
           trailing: IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () {},
           ),
         );
       },
-    );*/
+    );
+    // return ListView(
+    //   children: userList
+    //       .map((item) => ListTile(
+    //             title: Text(item.firstName),
+    //             subtitle: Text(item.lastName),
+    //             trailing: IconButton(
+    //               icon: const Icon(Icons.delete),
+    //               onPressed: () {},
+    //             ),
+    //           ))
+    //       .toList(),
+    // );
   }
 
   void openDialog() {
@@ -123,11 +137,17 @@ class _HomeScreenState extends State<HomeScreen> {
           Center(
             child: ElevatedButton(
               child: const Text("Save"),
-              onPressed: () {
+              onPressed: () async {
                 String firstname = _firstNameController.text;
                 String lastname = _lastNameController.text;
 
-                print("firstname : " + firstname + " lastname : " + lastname);
+                final userDao = database?.userDao;
+                final user = User(firstname, lastname);
+
+                await userDao?.insertUser(user);
+
+                print(firstname + lastname);
+                Navigator.of(context).pop();
               },
             ),
           ),
