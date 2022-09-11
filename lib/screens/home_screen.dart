@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutterdb/DAO/user_dao.dart';
 import 'package:flutterdb/db/database.dart';
 import 'package:flutterdb/entity/user.dart';
 
@@ -15,16 +16,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   FlutterDatabase? database;
-
-  @override
-  void initState() {
-    // initDatabase();
-    super.initState();
-  }
-
-  // Future<void> initDatabase() async {
-  //   database = await $FloorFlutterDatabase.databaseBuilder('user.db').build();
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: FutureBuilder<FlutterDatabase>(
-        future: $FloorFlutterDatabase.databaseBuilder('user.db').build(),
+        future: $FloorFlutterDatabase.databaseBuilder('users.db').build(),
         builder: (context, data) {
           if (data.hasData) {
             final FlutterDatabase database = data.data!;
@@ -53,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return StreamBuilder<List<User>>(
               stream: userDao.findAllUser(),
               builder: (context, snapshot) {
-                log("Snapshot data" + snapshot.toString());
+                log("Snapshot data------>" + snapshot.toString());
                 if (snapshot.hasData) {
                   final List<User> userList = snapshot.data!;
                   return buildUserList(userList);
@@ -82,13 +73,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView.builder(
       itemCount: userList.length,
       itemBuilder: (BuildContext context, int index) {
-        log("context----->" + context.toString());
+        log("userlist----->" + userList.toString());
+        log("userlength------>" + userList.length.toString());
         return ListTile(
-          title: Text(userList[index].firstName),
-          subtitle: Text(userList[index].lastName),
+          title: Text(userList[index].firstName ?? "[FirstName]"),
+          subtitle: Text(userList[index].lastName ?? "[LastName]"),
           trailing: IconButton(
             icon: const Icon(Icons.delete),
-            onPressed: () {},
+            onPressed: () async {
+              final deleteUser = userList[index];
+              log("User Index ---- > " + userList[index].toString());
+              final userDao = database?.userDao;
+              await userDao?.deleteUser(deleteUser);
+            },
           ),
         );
       },
@@ -145,6 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final user = User(firstname, lastname);
 
                 await userDao?.insertUser(user);
+                setState(() {});
 
                 print(firstname + lastname);
                 Navigator.of(context).pop();
