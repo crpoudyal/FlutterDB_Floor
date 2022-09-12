@@ -35,7 +35,9 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.add),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              setState(() {});
+            },
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -77,6 +79,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget buildUserList(List<User> userLists) {
     return ListView.builder(
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       itemCount: userLists.length,
       itemBuilder: (BuildContext context, int index) {
         return ListTile(
@@ -86,8 +90,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.delete),
             onPressed: () async {
               final userDao = database?.userDao;
-
               await userDao?.deleteUser(userLists[index]);
+              final snackBar = SnackBar(
+                content: Text("${userLists[index].firstName} is deleted"),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
             },
           ),
         );
@@ -147,6 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 await userDao?.insertUser(user);
 
                 Navigator.of(context).pop();
+                const snackBar = SnackBar(
+                  content: Text("new user added"),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
                 _firstNameController.clear();
                 _lastNameController.clear();
               },
