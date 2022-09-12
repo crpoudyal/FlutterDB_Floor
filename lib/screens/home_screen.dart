@@ -18,13 +18,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    // initDatabase();
     super.initState();
+    setState(() {});
   }
-
-  // Future<void> initDatabase() async {
-  //   database = await $FloorFlutterDatabase.databaseBuilder('user.db').build();
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -45,18 +41,19 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: FutureBuilder<FlutterDatabase>(
-        future: $FloorFlutterDatabase.databaseBuilder('user.db').build(),
+        future: $FloorFlutterDatabase.databaseBuilder('users.db').build(),
         builder: (context, data) {
           if (data.hasData) {
-            final FlutterDatabase database = data.data!;
-            final userDao = database.userDao;
+            database = data.data!;
+            final userDao = database!.userDao;
             return StreamBuilder<List<User>>(
               stream: userDao.findAllUser(),
               builder: (context, snapshot) {
                 log("Snapshot data" + snapshot.toString());
                 if (snapshot.hasData) {
-                  final List<User> userList = snapshot.data!;
-                  return buildUserList(userList);
+                  log("Inside snapshort--------__--");
+                  final List<User>? userList = snapshot.data;
+                  return buildUserList(userList!);
                 } else if (snapshot.hasError) {
                   return const Center(
                     child: Text("Error encountered"),
@@ -78,23 +75,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget buildUserList(List<User> userList) {
+  Widget buildUserList(List<User> userLists) {
     return ListView.builder(
-      itemCount: userList.length,
+      itemCount: userLists.length,
       itemBuilder: (BuildContext context, int index) {
-        log("context----->" + context.toString());
         return ListTile(
-          title: Text(userList[index].firstName),
-          subtitle: Text(userList[index].lastName),
+          title: Text(userLists[index].firstName),
+          subtitle: Text(userLists[index].lastName),
           trailing: IconButton(
             icon: const Icon(Icons.delete),
-            onPressed: () {},
+            onPressed: () async {
+              final userDao = database?.userDao;
+
+              await userDao?.deleteUser(userLists[index]);
+            },
           ),
         );
       },
     );
     // return ListView(
-    //   children: userList
+    //   children: userLists
     //       .map((item) => ListTile(
     //             title: Text(item.firstName),
     //             subtitle: Text(item.lastName),
@@ -142,12 +142,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 String lastname = _lastNameController.text;
 
                 final userDao = database?.userDao;
-                final user = User(firstname, lastname);
+                final user = User(firstName: firstname, lastName: lastname);
 
                 await userDao?.insertUser(user);
 
-                print(firstname + lastname);
                 Navigator.of(context).pop();
+                _firstNameController.clear();
+                _lastNameController.clear();
               },
             ),
           ),
