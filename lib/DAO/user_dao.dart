@@ -3,8 +3,12 @@ import 'package:flutterdb/entity/user.dart';
 
 @dao
 abstract class UserDao {
-  @Query('SELECT * FROM User')
+  @Query('SELECT * FROM user')
   Stream<List<User>> findAllUser();
+
   @insert
   Future<void> insertUser(User user);
+
+  @delete
+  Future<void> deleteUser(User user);
 }

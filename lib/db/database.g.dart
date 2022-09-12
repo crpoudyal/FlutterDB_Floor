@@ -82,7 +82,7 @@ class _$FlutterDatabase extends FlutterDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `user` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `firstName` TEXT NOT NULL, `lastName` TEXT NOT NULL)');
+            'CREATE TABLE IF NOT EXISTS `user` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `firstname` TEXT NOT NULL, `lastname` TEXT NOT NULL)');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -104,8 +104,18 @@ class _$UserDao extends UserDao {
             'user',
             (User item) => <String, Object?>{
                   'id': item.id,
-                  'firstName': item.firstName,
-                  'lastName': item.lastName
+                  'firstname': item.firstName,
+                  'lastname': item.lastName
+                },
+            changeListener),
+        _userDeletionAdapter = DeletionAdapter(
+            database,
+            'user',
+            ['id'],
+            (User item) => <String, Object?>{
+                  'id': item.id,
+                  'firstname': item.firstName,
+                  'lastname': item.lastName
                 },
             changeListener);
 
@@ -117,11 +127,15 @@ class _$UserDao extends UserDao {
 
   final InsertionAdapter<User> _userInsertionAdapter;
 
+  final DeletionAdapter<User> _userDeletionAdapter;
+
   @override
   Stream<List<User>> findAllUser() {
-    return _queryAdapter.queryListStream('SELECT * FROM User',
-        mapper: (Map<String, Object?> row) => User(row['id'] as int,
-            row['firstName'] as String, row['lastName'] as String),
+    return _queryAdapter.queryListStream('SELECT * FROM user',
+        mapper: (Map<String, Object?> row) => User(
+            id: row['id'] as int?,
+            firstName: row['firstname'] as String,
+            lastName: row['lastname'] as String),
         queryableName: 'user',
         isView: false);
   }
@@ -129,5 +143,10 @@ class _$UserDao extends UserDao {
   @override
   Future<void> insertUser(User user) async {
     await _userInsertionAdapter.insert(user, OnConflictStrategy.abort);
+  }
+
+  @override
+  Future<void> deleteUser(User user) async {
+    await _userDeletionAdapter.delete(user);
   }
 }
