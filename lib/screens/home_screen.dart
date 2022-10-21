@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutterdb/db/database.dart';
 import 'package:flutterdb/entity/user.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -84,6 +86,12 @@ class _HomeScreenState extends State<HomeScreen> {
       itemCount: userLists.length,
       itemBuilder: (BuildContext context, int index) {
         return ListTile(
+          leading: IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              showDialogForUpdate();
+            },
+          ),
           title: Text(userLists[index].firstName),
           subtitle: Text(userLists[index].lastName),
           trailing: IconButton(
@@ -100,18 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
-    // return ListView(
-    //   children: userLists
-    //       .map((item) => ListTile(
-    //             title: Text(item.firstName),
-    //             subtitle: Text(item.lastName),
-    //             trailing: IconButton(
-    //               icon: const Icon(Icons.delete),
-    //               onPressed: () {},
-    //             ),
-    //           ))
-    //       .toList(),
-    // );
   }
 
   void openDialog() {
@@ -152,10 +148,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 final user = User(firstName: firstname, lastName: lastname);
 
                 await userDao?.insertUser(user);
-
-                Navigator.of(context).pop();
-                const snackBar = SnackBar(
-                  content: Text("new user added"),
+                Get.back();
+                var snackBar = SnackBar(
+                  content: Text('$firstname added'),
                 );
                 ScaffoldMessenger.of(context).showSnackBar(snackBar);
                 _firstNameController.clear();
@@ -166,5 +161,59 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  void showDialogForUpdate() {
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text("Update Information"),
+              content: SizedBox(
+                height: 100,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _firstNameController,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter First Name',
+                      ),
+                    ),
+                    TextField(
+                      controller: _lastNameController,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter Last Name',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                Center(
+                  child: ElevatedButton(
+                    child: const Text("Update"),
+                    onPressed: () async {
+                      String firstname = _firstNameController.text;
+                      String lastname = _lastNameController.text;
+
+                      final userDao = database?.userDao;
+                      final users =
+                          User(firstName: firstname, lastName: lastname);
+
+                      await userDao?.updateUser(users);
+
+                      Get.back();
+                      var snackBar = SnackBar(
+                        content: Text("$firstname updated"),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                      _firstNameController.clear();
+                      _lastNameController.clear();
+                    },
+                  ),
+                ),
+              ],
+            ));
   }
 }
